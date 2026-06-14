@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 from streamlit_option_menu import option_menu
 import pandas as pd
@@ -6,6 +7,28 @@ import sqlite3
 import plotly.express as px
 from rdkit import Chem
 from rdkit.Chem import Draw
+
+import os
+
+st.set_page_config(
+    page_title="Química Orgánica Interactive",
+    page_icon="🧪",
+    layout="wide"
+)
+
+os.makedirs("database", exist_ok=True)
+
+conexion = sqlite3.connect("database/quimica.db")
+cursor = conexion.cursor()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS progreso (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    modulo TEXT,
+    puntos INTEGER
+)
+""")
+conexion.commit()
+conexion.close()
 
 # =====================================================
 # 💾 FUNCIÓN PARA GUARDAR PUNTOS
@@ -24,49 +47,101 @@ def guardar_puntos(modulo, puntos):
 
     conexion.commit()
     conexion.close()
- # =====================================================
+     # =====================================================
 # CONFIGURACIÓN
 # =====================================================
 
-st.set_page_config(
-    page_title="Química Orgánica Interactive",
-    page_icon="🧪",
-    layout="wide"
-)
 st.markdown("""
 <style>
 
-/* FONDO GENERAL SUAVE */
-.stApp {
-    background: linear-gradient(135deg, #EEF6FF, #F8FAFC, #E0F2FE);
-    color: #1E293B;
+/* TÍTULO PRINCIPAL */
+
+h1 {
+    color: #000814 !important;
+    text-align: center;
+    font-size: 80px !important;
+    font-weight: 1000 !important;
+    letter-spacing: -2px;
+    text-shadow:
+        0px 2px 0px rgba(0,0,0,0.15),
+        0px 4px 10px rgba(0,0,0,0.10);
+    margin-bottom: 25px !important;
 }
 
-/* OPCIÓN ACTIVA DEL MENÚ */
+.stApp {
+    background: #F8FAFC;
+    color: #0F172A;
+}
+
+p, li, span, div, label {
+    color: #0F172A !important;
+    font-size: 17px;
+    font-weight: 500;
+}
+
+h1 {
+    color: #020617 !important;
+    text-align: center;
+    font-size: 65px !important;
+    font-weight: 900;
+}
+
+h2 {
+    color: #020617 !important;
+    font-weight: 900;
+}
+
+h3 {
+    color: #0F172A !important;
+    font-weight: 800;
+}
 
 .nav-link.active {
-    background: linear-gradient(
-        90deg,
-        #22C55E,
-        #38BDF8
-    ) !important;
-
+    background: linear-gradient(90deg, #22C55E, #38BDF8) !important;
     color: white !important;
     font-weight: 900 !important;
     border-left: 8px solid #FDE047 !important;
-    box-shadow: 0px 0px 20px rgba(34,197,94,0.7);
+    box-shadow: 0px 0px 14px rgba(34,197,94,0.45);
     border-radius: 14px !important;
 }
 
-/* TARJETAS */
 .card {
     padding: 24px;
     border-radius: 22px;
-    background: rgba(255,255,255,0.85);
+    background: #FFFFFF;
+    border: 2px solid #BAE6FD;
+    box-shadow: 0px 8px 20px rgba(15,23,42,0.10);
 }
 
+section[data-testid="stSidebar"] {
+    background: #FFFFFF;
+    border-right: 2px solid #BAE6FD;
+}
+ /* =====================================================
+💛 CUADROS AMARILLO CLARO
+===================================================== */
+
+.card{
+    background: #FFFDE7 !important;
+    border: 2px solid #FDE68A !important;
+    color: #0F172A !important;
+}
+
+div[data-testid="stAlert"]{
+    background: #FFFDE7 !important;
+    color: #0F172A !important;
+}
+
+.stInfo,
+.stSuccess,
+.stWarning,
+.stError{
+    background: #FFFDE7 !important;
+    color: #0F172A !important;
+}
 </style>
 """, unsafe_allow_html=True)
+ 
 # =====================================================
 # SIDEBAR
 # =====================================================
@@ -94,21 +169,31 @@ with st.sidebar:
         default_index=0
     )
 
-
-# =====================================================
+ # =====================================================
 # INICIO
 # =====================================================
-
 if selected == "Inicio":
 
-    st.title("🧪 Reacciones de Adición y Sustitución en Compuestos del Carbono")
+    st.markdown("""
+    <div style="
+    text-align:center;
+    font-size:60px;
+    font-weight:1000;
+    color:#020617;
+    margin-top:20px;
+    margin-bottom:40px;
+    text-shadow:0px 0px 10px rgba(245,158,11,0.20);
+    ">
+    🧪 Reacciones de Adición y Sustitución en Compuestos del Carbono
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("""
     <div class="hero-card">
         <p class="creator">Creador: Andrade Pazos Bryan</p>
         <p>
-        Plataforma interactiva para estudiar de forma visual, ordenada y dinámica
-        las principales reacciones orgánicas del carbono.
+        Plataforma interactiva para estudiar de forma visual,
+        ordenada y dinámica las principales reacciones orgánicas.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -116,27 +201,29 @@ if selected == "Inicio":
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.markdown("""
         <div class="card">
         <h2>⚡ Adición</h2>
         <p>
-        Estudia reacciones donde un doble enlace se rompe y se agregan nuevos átomos
-        a la molécula.
+        Reacciones donde se agregan átomos o grupos a una molécula.
         </p>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
+
         st.markdown("""
         <div class="card">
         <h2>🔄 Sustitución</h2>
         <p>
-        Analiza procesos donde un átomo o grupo funcional es reemplazado por otro.
+        Reacciones donde un átomo o grupo es reemplazado por otro.
         </p>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
+
         st.markdown("""
         <div class="card">
         <h2>🧬 Mecanismos</h2>
@@ -149,13 +236,17 @@ if selected == "Inicio":
     st.markdown("""
     <div class="card">
     <h2>📌 ¿Qué encontrarás en esta plataforma?</h2>
-    <ul>
-        <li>📘 Teoría clara y estructurada</li>
-        <li>🧬 Mecanismos orgánicos paso a paso</li>
-        <li>🧪 Ejercicios interactivos</li>
-        <li>📝 Quiz de evaluación</li>
-        <li>⚗️ Laboratorio virtual</li>
-    </ul>
+
+    📘 Teoría clara y estructurada<br><br>
+
+    🧬 Mecanismos orgánicos paso a paso<br><br>
+
+    🧪 Ejercicios interactivos<br><br>
+
+    📝 Quiz de evaluación<br><br>
+
+    ⚗️ Laboratorio virtual
+
     </div>
     """, unsafe_allow_html=True)
  # =====================================================
@@ -190,8 +281,8 @@ elif selected == "Teoría":
             font-size: 13px;
             display: inline-block;
         }
-        .esquema-text {
-            background-color: #23272E;
+       .esquema-text {
+            background-color: #23272E7;
             color: #82AAFF;
             font-family: monospace;
             padding: 10px;
@@ -849,14 +940,13 @@ if selected == "Mecanismos":
     # =================================================
 
     st.subheader("📌 Menú de selección")
-
     tipo = st.selectbox(
-        "Selecciona el tipo de reacción:",
-        [
-            "⚡ Reacciones de Adición",
-            "🔄 Reacciones de Sustitución"
-        ]
-    )
+    "Selecciona el tipo de reacción:",
+    [
+        "⚡ Reacciones de Adición",
+        "🔄 Reacciones de Sustitución"
+    ]
+)
 
     if tipo == "⚡ Reacciones de Adición":
 
@@ -1321,8 +1411,8 @@ if selected == "Mecanismos":
         <style>
         body {{
             margin:0;
-            background:#08111F;
-            color:white;
+            background:#FFFDE7;
+             color:#0F172A;
             font-family:Arial;
         }}
          .box {{
@@ -3062,55 +3152,56 @@ if selected == "Mecanismos":
 
 elif selected == "Ejercicios":
 
-    # Evita error si guardar_puntos no existe
-    try:
-        guardar_puntos
-    except NameError:
-        def guardar_puntos(modulo, puntos):
-            st.toast(f"🏆 +{puntos} XP en {modulo}")
-
-    # CSS visual
+     # CSS visual
     st.markdown("""
     <style>
     .game-card {
-        background: linear-gradient(135deg, #141e30, #243b55);
+        background: #FFFDE7;
         padding: 25px;
         border-radius: 25px;
-        border: 2px solid #00f5ff;
-        box-shadow: 0 0 25px #00f5ff;
-        color: white;
+        border: 2px solid #FDE68A;
+        box-shadow: 0 0 20px rgba(245,158,11,0.25);
+        color: #0F172A !important;
         margin: 20px 0;
         animation: aparecer 0.8s ease-in-out;
+    }
+
+    .game-card p,
+    .game-card div,
+    .game-card span,
+    .game-card b {
+        color: #0F172A !important;
     }
 
     .reto-title {
         text-align: center;
         font-size: 38px;
-        color: #ffffff;
-        text-shadow: 0 0 15px #00f5ff, 0 0 25px #ff00ff;
+        color: #0F172A;
+        text-shadow: 0 0 10px rgba(245,158,11,0.35);
         animation: brillo 2s infinite alternate;
     }
 
     .formula-box {
-        background: #050505;
-        color: #00ffcc;
+        background: #FFFDE7;
+        color: #0F172A !important;
         padding: 18px;
         border-radius: 15px;
         font-size: 24px;
         text-align: center;
-        border: 2px solid #00ffcc;
-        box-shadow: 0 0 18px #00ffcc;
+        border: 2px solid #FDE68A;
+        box-shadow: 0 0 18px rgba(245,158,11,0.25);
         margin: 15px 0;
     }
 
     .badge-xp {
-        background: linear-gradient(90deg, #f7971e, #ffd200);
-        color: black;
+        background: linear-gradient(90deg, #FEF3C7, #FDE68A);
+        color: #0F172A !important;
         padding: 10px 18px;
         border-radius: 20px;
         font-weight: bold;
         display: inline-block;
         margin: 5px;
+        border: 1px solid #FACC15;
     }
 
     @keyframes aparecer {
@@ -3119,8 +3210,8 @@ elif selected == "Ejercicios":
     }
 
     @keyframes brillo {
-        from {text-shadow: 0 0 10px #00f5ff;}
-        to {text-shadow: 0 0 30px #ff00ff;}
+        from {text-shadow: 0 0 8px rgba(245,158,11,0.25);}
+        to {text-shadow: 0 0 20px rgba(245,158,11,0.55);}
     }
     </style>
     """, unsafe_allow_html=True)
