@@ -3,4 +3,4 @@ streamlit-option-menu
 plotly
 pandas
 pillow
-rdkit
+ 
