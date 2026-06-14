@@ -5,8 +5,8 @@ from streamlit_option_menu import option_menu
 import pandas as pd
 import sqlite3
 import plotly.express as px
-from rdkit import Chem
-from rdkit.Chem import Draw
+# from rdkit import Chem
+# from rdkit.Chem import Draw
 
 import os
 
